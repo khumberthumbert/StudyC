@@ -8,11 +8,13 @@ typedef struct USERDATA
 	int age;
 	char name[32];
 	char phone[32];
+	struct USERDATA* pPrev;
 	struct USERDATA* pNext;
 } USERDATA;
 
 //USERDATA* g_pHeadNode = NULL;
-USERDATA g_HeadNode = { 0, "__Dummy Node__"};
+USERDATA g_HeadNode = { 0, "__Dummy Head__" };
+USERDATA g_TailNode = { 0, "__Dummy Tail__"};
 
 void AddNewNode(int age, const char *pszName, const char *pszPhone)
 {
@@ -20,21 +22,29 @@ void AddNewNode(int age, const char *pszName, const char *pszPhone)
 	pNewNode->age = age;
 	strcpy_s(pNewNode->name, sizeof(pNewNode->name), pszName);
 	strcpy_s(pNewNode->phone, sizeof(pNewNode->phone), pszPhone);
+	pNewNode->pPrev = NULL;
 	pNewNode->pNext = NULL;
-	
-	USERDATA* pTail = &g_HeadNode;
-	while (pTail->pNext != NULL)
-		pTail = pTail->pNext;
 
-	pTail->pNext = pNewNode;
-	
+	USERDATA* pPrevNode = g_TailNode.pPrev;
+	pNewNode->pPrev = g_TailNode.pPrev;
+	pNewNode->pNext = &g_TailNode;
+
+	pPrevNode->pNext = pNewNode;
+	g_TailNode.pPrev = pNewNode;
+
+}  
+
+void InitList(void)
+{
+	g_HeadNode.pNext = &g_TailNode;
+	g_TailNode.pPrev = &g_HeadNode;
 }
 
 void ReleaseList()
 {
 	USERDATA* pTmp = g_HeadNode.pNext;
 	USERDATA* pDelete;
-	while (pTmp != NULL)
+	while (pTmp != NULL && pTmp != &g_TailNode)
 	{	
 		pDelete = pTmp;
 		pTmp = pTmp->pNext;
@@ -45,7 +55,7 @@ void ReleaseList()
 		free(pDelete);
 	}									
 
-	g_HeadNode.pNext = NULL;
+	InitList();
 }
 
 void InitDummyData(void)
@@ -71,26 +81,14 @@ USERDATA* SearchByName(const char* pszName)
 	return NULL;
 }
 
-USERDATA* SearchToRemove(const char* pszName)
+void RemoveNode(USERDATA* pRemove)
 {
-	USERDATA* pPrev = &g_HeadNode;
-	while (pPrev->pNext != NULL)
-	{
-		if (strcmp(pPrev->pNext->name, pszName) == 0)
-		{
-			return pPrev;
-		}
-		pPrev = pPrev->pNext;
-	}
-	return NULL;
-}
+	USERDATA* pPrev = pRemove->pPrev;
+	USERDATA* pNext = pRemove->pNext;
 
-void RemoveNode(USERDATA* pPrev)
-{
-	USERDATA* pRemove = NULL;
-	
-	pRemove = pPrev->pNext;
 	pPrev->pNext = pRemove->pNext;
+	pNext->pPrev = pRemove->pPrev;
+
 	printf("RemoveNode(): %s\n", pRemove->name);
 	free(pRemove);
 }
@@ -107,6 +105,18 @@ void PrintList(void)
 	putchar('\n');
 }
 
+void PrintListReverse(void)
+{
+	USERDATA* pTmp = g_TailNode.pPrev;
+	while (pTmp != NULL)
+	{
+		printf("[%p]\t %d\t %s\t %s\t pNext : [%p]\n", pTmp,
+			pTmp->age, pTmp->name, pTmp->phone, pTmp->pNext);
+		pTmp = pTmp->pPrev;
+	}
+	putchar('\n');
+}
+
 void TestStemp01(void)
 {
 	puts("TestStemp01()-------------------");
@@ -115,7 +125,7 @@ void TestStemp01(void)
 	AddNewNode(13, "Jang", "010-3333-3333");
 	PrintList();
 
-	USERDATA* pPrev = SearchToRemove("Choi");
+	USERDATA* pPrev = SearchByName("Choi");
 	if (pPrev != NULL)
 		RemoveNode(pPrev);
 	ReleaseList();
@@ -130,7 +140,7 @@ void TestStemp02(void)
 	AddNewNode(13, "Jang", "010-3333-3333");
 	PrintList();
 
-	USERDATA* pPrev = SearchToRemove("Hoon");
+	USERDATA* pPrev = SearchByName("Hoon");
 	if (pPrev != NULL)
 		RemoveNode(pPrev);
 	ReleaseList();
@@ -145,7 +155,7 @@ void TestStemp03(void)
 	AddNewNode(13, "Jang", "010-3333-3333");
 	PrintList();
 
-	USERDATA* pPrev = SearchToRemove("Jang");
+	USERDATA* pPrev = SearchByName("Jang");
 	if (pPrev != NULL)
 		RemoveNode(pPrev);
 	ReleaseList();
@@ -154,6 +164,7 @@ void TestStemp03(void)
 
 int main(void)
 {
+	InitList();
 	TestStemp01();
 	TestStemp02();
 	TestStemp03();
