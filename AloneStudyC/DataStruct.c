@@ -38,6 +38,8 @@ void InitList(void)
 {
 	g_HeadNode.pNext = &g_TailNode;
 	g_TailNode.pPrev = &g_HeadNode;
+
+	//g_TailNode.pNext = &g_HeadNode; //¼øÈ¯ Å¥.
 }
 
 void ReleaseList()
@@ -162,12 +164,78 @@ void TestStemp03(void)
 	putchar('\n');
 }
 
+int IsEmpty(void)
+{
+	if (g_HeadNode.pNext == &g_TailNode)
+		return 1;
+
+	return 0;
+}
+
+void Push(USERDATA* pUser)
+{
+	USERDATA* pNewNode = (USERDATA*)malloc(sizeof(USERDATA));
+	memcpy(pNewNode, pUser, sizeof(USERDATA));
+	pNewNode->pPrev = NULL;
+	pNewNode->pNext = NULL;
+
+	USERDATA* pNextNode = g_HeadNode.pNext;
+	pNewNode->pPrev = &g_HeadNode;
+	pNewNode->pNext = g_HeadNode.pNext;
+
+	pNextNode->pPrev = pNewNode;
+	g_HeadNode.pNext = pNewNode;
+}
+
+USERDATA* Pop()
+{
+	if (IsEmpty())
+	{
+		puts("Error: Stack Underflow.");
+		return NULL;
+	}
+
+	USERDATA* pPop = g_HeadNode.pNext;
+	g_HeadNode.pNext = pPop->pNext;
+	pPop->pNext->pPrev = pPop->pPrev;
+
+	return pPop;
+}
+
+USERDATA* Dequeue(void)
+{
+	return Pop();
+}
+
+void Enqueue(USERDATA* pUser)
+{
+	AddNewNode(pUser->age, pUser->name, pUser->phone);
+}
+
 int main(void)
 {
 	InitList();
-	TestStemp01();
-	TestStemp02();
-	TestStemp03();
+	USERDATA user = { 10, "Test01"};
+	//Push(&user);
+	Enqueue(&user);
+
+	user.age = 11;
+	strcpy_s(user.name, sizeof(user.name), "Test02");
+	//Push(&user);
+	Enqueue(&user);
+
+	user.age = 12;
+	strcpy_s(user.name, sizeof(user.name), "Test03");
+	//Push(&user);
+	Enqueue(&user);
+
+	for (int i = 0; i < 3; i++) {
+		//USERDATA* pUser = Pop();
+		USERDATA* pUser = Dequeue();
+		printf("Pop : %d, %s\n", pUser->age, pUser->name);
+		free(pUser);
+	}
+	ReleaseList();
 
 	return 0;
 }
